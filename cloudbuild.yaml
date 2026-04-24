@@ -1,6 +1,9 @@
-# Cloud Build: run from monorepo root with Docker context = AIBudgetTrackerBackend/
-# Trigger should use build config path: AIBudgetTrackerBackend/cloudbuild.yaml
-# and included_files: AIBudgetTrackerBackend/** so Kotlin-only commits do not run this build.
+# Backend Docker image from monorepo root. Many Cloud Build triggers look for
+# cloudbuild.yaml at the repository root (default path).
+#
+# Trigger tips:
+# - included_files: AIBudgetTrackerBackend/**  → Kotlin-only commits skip this build
+# - Docker context directory: AIBudgetTrackerBackend/
 steps:
   - name: gcr.io/cloud-builders/docker
     args:

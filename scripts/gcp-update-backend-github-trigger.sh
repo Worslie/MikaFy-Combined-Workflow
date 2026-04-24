@@ -13,7 +13,7 @@
 # If this fails with errors about "repository" or Developer Connect / 2nd gen,
 # use the console: Cloud Build → Triggers → your trigger → Edit:
 #   - Repository: Worslie / MikaFy-Combined-Workflow
-#   - Configuration: AIBudgetTrackerBackend/cloudbuild.yaml
+#   - Configuration: cloudbuild.yaml (repo root; default for many triggers)
 #   - Included files (glob): AIBudgetTrackerBackend/**
 # Optional in console: Ignored files BudgetTrackerAI/** (usually unnecessary if Included files is set).
 #
@@ -33,7 +33,7 @@ gcloud builds triggers update github "${TRIGGER_NAME}" \
   --repo-owner=Worslie \
   --repo-name=MikaFy-Combined-Workflow \
   --branch-pattern="${BRANCH_PATTERN}" \
-  --build-config=AIBudgetTrackerBackend/cloudbuild.yaml \
+  --build-config=cloudbuild.yaml \
   --included-files='AIBudgetTrackerBackend/**'
 
 echo "Done. Describe trigger to verify:"
