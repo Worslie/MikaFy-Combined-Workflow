@@ -1,11 +1,9 @@
 # Backend Docker image from monorepo root.
 #
-# One-time (Artifact Registry — gcr.io auto-create is restricted):
-#   Console → Artifact Registry → Create repository
-#   - Format: Docker
-#   - Name: aibudget
-#   - Region: europe-west2  (change below if you use another region)
-#   IAM: PROJECT_NUMBER@cloudbuild.gserviceaccount.com → Artifact Registry Writer
+# Artifact Registry (Docker):
+#   europe-west2-docker.pkg.dev/$PROJECT_ID/REPO/IMAGE:tag
+#   REPO=aibudgettrackerbackend, IMAGE=aibudgettrackerbackend
+# Region must match the repository region. IAM: Cloud Build SA → Artifact Registry Writer
 #
 # Trigger: included_files AIBudgetTrackerBackend/** keeps Kotlin-only pushes out.
 steps:
@@ -13,14 +11,14 @@ steps:
     args:
       - build
       - -t
-      - europe-west2-docker.pkg.dev/$PROJECT_ID/aibudget/backend:$SHORT_SHA
+      - europe-west2-docker.pkg.dev/$PROJECT_ID/aibudgettrackerbackend/aibudgettrackerbackend:$SHORT_SHA
       - -t
-      - europe-west2-docker.pkg.dev/$PROJECT_ID/aibudget/backend:latest
+      - europe-west2-docker.pkg.dev/$PROJECT_ID/aibudgettrackerbackend/aibudgettrackerbackend:latest
       - AIBudgetTrackerBackend
 
 images:
-  - europe-west2-docker.pkg.dev/$PROJECT_ID/aibudget/backend:$SHORT_SHA
-  - europe-west2-docker.pkg.dev/$PROJECT_ID/aibudget/backend:latest
+  - europe-west2-docker.pkg.dev/$PROJECT_ID/aibudgettrackerbackend/aibudgettrackerbackend:$SHORT_SHA
+  - europe-west2-docker.pkg.dev/$PROJECT_ID/aibudgettrackerbackend/aibudgettrackerbackend:latest
 
 options:
   logging: CLOUD_LOGGING_ONLY
