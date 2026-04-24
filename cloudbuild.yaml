@@ -1,22 +1,26 @@
-# Backend Docker image from monorepo root. Many Cloud Build triggers look for
-# cloudbuild.yaml at the repository root (default path).
+# Backend Docker image from monorepo root.
 #
-# Trigger tips:
-# - included_files: AIBudgetTrackerBackend/**  → Kotlin-only commits skip this build
-# - Docker context directory: AIBudgetTrackerBackend/
+# One-time (Artifact Registry — gcr.io auto-create is restricted):
+#   Console → Artifact Registry → Create repository
+#   - Format: Docker
+#   - Name: aibudget
+#   - Region: europe-west2  (change below if you use another region)
+#   IAM: PROJECT_NUMBER@cloudbuild.gserviceaccount.com → Artifact Registry Writer
+#
+# Trigger: included_files AIBudgetTrackerBackend/** keeps Kotlin-only pushes out.
 steps:
   - name: gcr.io/cloud-builders/docker
     args:
       - build
       - -t
-      - gcr.io/$PROJECT_ID/aibudget-backend:$SHORT_SHA
+      - europe-west2-docker.pkg.dev/$PROJECT_ID/aibudget/backend:$SHORT_SHA
       - -t
-      - gcr.io/$PROJECT_ID/aibudget-backend:latest
+      - europe-west2-docker.pkg.dev/$PROJECT_ID/aibudget/backend:latest
       - AIBudgetTrackerBackend
 
 images:
-  - gcr.io/$PROJECT_ID/aibudget-backend:$SHORT_SHA
-  - gcr.io/$PROJECT_ID/aibudget-backend:latest
+  - europe-west2-docker.pkg.dev/$PROJECT_ID/aibudget/backend:$SHORT_SHA
+  - europe-west2-docker.pkg.dev/$PROJECT_ID/aibudget/backend:latest
 
 options:
   logging: CLOUD_LOGGING_ONLY
