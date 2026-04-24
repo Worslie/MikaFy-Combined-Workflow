@@ -8,6 +8,7 @@ from services.ai_queries.csv.csv_proccessor import process_csv_upload
 from services.ai_queries.transaction_enricher import process_and_categorize, category_assignment
 
 router = APIRouter(prefix="/analyze", tags=["AI"])
+# Smoke test: trivial backend-only edit to verify Cloud Build trigger on push to main.
 
 
 @router.post("/transaction")
@@ -41,6 +42,7 @@ async def upload_csv(
     if not file.filename.endswith('.csv'):
         raise HTTPException(status_code=400, detail="Invalid file type.")
 
+    # Creates a temporary file
     temp_path = f"temp_{file.filename}"
 
     try:
