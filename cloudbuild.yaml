@@ -3,19 +3,21 @@
 # Image URL shape:
 #   ${_AR_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_AR_IMAGE_NAME}:TAG
 #
-# If push fails with "Repository ... not found":
-#   1) Artifact Registry → Repositories: confirm Repository ID (column), not only display name.
-#   2) Region in this file must match the repository region (e.g. europe-west2 vs us-central1).
-#   3) Create a Docker repository in that region, or override subs in the Cloud Build trigger.
+# Defaults match Cloud Run’s managed Artifact Registry repo in europe-west2:
+#   Repository ID: cloud-run-source-deploy
+#   Image name:    aibudget-backend  (align with your Cloud Run service if different)
 #
-# Common Cloud Run default repo name: cloud-run-source-deploy (image = service name).
+# IAM: whichever account runs the build needs roles/artifactregistry.writer on this repo
+# (often PROJECT_NUMBER@cloudbuild.gserviceaccount.com, or your trigger’s custom SA).
+#
+# Override _AR_* in the Cloud Build trigger if your AR layout differs.
 #
 # Trigger: included_files AIBudgetTrackerBackend/** keeps Kotlin-only pushes out.
 
 substitutions:
   _AR_LOCATION: europe-west2
-  _AR_REPOSITORY: aibudgettrackerbackend
-  _AR_IMAGE_NAME: aibudgettrackerbackend
+  _AR_REPOSITORY: cloud-run-source-deploy
+  _AR_IMAGE_NAME: aibudget-backend
 
 steps:
   - name: gcr.io/cloud-builders/docker
