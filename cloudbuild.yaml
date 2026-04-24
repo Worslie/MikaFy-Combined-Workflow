@@ -1,17 +1,20 @@
-# Backend Docker image from monorepo root.
+# Backend: build → push to Artifact Registry → deploy Cloud Run (same build).
 #
-# Image URL shape:
+# Image URL:
 #   ${_AR_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_AR_IMAGE_NAME}:TAG
-#
-# Defaults match Cloud Run’s managed Artifact Registry repo in europe-west2.
-# Resolved destination (this project, no gcr.io for the app image):
+# Example (this project):
 #   europe-west2-docker.pkg.dev/project-de78e93f-2f10-4495-9bb/cloud-run-source-deploy/aibudget-backend:$SHORT_SHA
-# Builder image below stays gcr.io/cloud-builders/docker (Google’s Docker builder only).
 #
-# IAM: whichever account runs the build needs roles/artifactregistry.writer on this repo
-# (often PROJECT_NUMBER@cloudbuild.gserviceaccount.com, or your trigger’s custom SA).
+# We use explicit `docker push` steps before `gcloud run deploy` because the
+# `images:` field is pushed only after all steps finish, which would be too late
+# for deploy to pull the new image.
 #
-# Override _AR_* in the Cloud Build trigger if your AR layout differs.
+# IAM (build service account — trigger default or custom):
+#   - roles/artifactregistry.writer  (push images)
+#   - roles/run.admin                (deploy Cloud Run)
+#   - roles/iam.serviceAccountUser   (on the Cloud Run runtime SA if deploy uses it)
+#
+# Override _AR_* / _RUN_SERVICE in the Cloud Build trigger if needed.
 #
 # Trigger: included_files AIBudgetTrackerBackend/** keeps Kotlin-only pushes out.
 
@@ -19,9 +22,11 @@ substitutions:
   _AR_LOCATION: europe-west2
   _AR_REPOSITORY: cloud-run-source-deploy
   _AR_IMAGE_NAME: aibudget-backend
+  _RUN_SERVICE: aibudgettrackerbackend
 
 steps:
-  - name: gcr.io/cloud-builders/docker
+  - id: build
+    name: gcr.io/cloud-builders/docker
     args:
       - build
       - -t
@@ -30,9 +35,34 @@ steps:
       - ${_AR_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_AR_IMAGE_NAME}:latest
       - AIBudgetTrackerBackend
 
-images:
-  - ${_AR_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_AR_IMAGE_NAME}:$SHORT_SHA
-  - ${_AR_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_AR_IMAGE_NAME}:latest
+  - id: push-sha
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_AR_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_AR_IMAGE_NAME}:$SHORT_SHA
+    waitFor:
+      - build
+
+  - id: push-latest
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_AR_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_AR_IMAGE_NAME}:latest
+    waitFor:
+      - build
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_RUN_SERVICE}
+      - --image=${_AR_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_AR_IMAGE_NAME}:$SHORT_SHA
+      - --region=${_AR_LOCATION}
+      - --quiet
+    waitFor:
+      - push-sha
 
 options:
   logging: CLOUD_LOGGING_ONLY
