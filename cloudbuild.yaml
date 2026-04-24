@@ -1,24 +1,35 @@
 # Backend Docker image from monorepo root.
 #
-# Artifact Registry (Docker):
-#   europe-west2-docker.pkg.dev/$PROJECT_ID/REPO/IMAGE:tag
-#   REPO=aibudgettrackerbackend, IMAGE=aibudgettrackerbackend
-# Region must match the repository region. IAM: Cloud Build SA → Artifact Registry Writer
+# Image URL shape:
+#   ${_AR_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_AR_IMAGE_NAME}:TAG
+#
+# If push fails with "Repository ... not found":
+#   1) Artifact Registry → Repositories: confirm Repository ID (column), not only display name.
+#   2) Region in this file must match the repository region (e.g. europe-west2 vs us-central1).
+#   3) Create a Docker repository in that region, or override subs in the Cloud Build trigger.
+#
+# Common Cloud Run default repo name: cloud-run-source-deploy (image = service name).
 #
 # Trigger: included_files AIBudgetTrackerBackend/** keeps Kotlin-only pushes out.
+
+substitutions:
+  _AR_LOCATION: europe-west2
+  _AR_REPOSITORY: aibudgettrackerbackend
+  _AR_IMAGE_NAME: aibudgettrackerbackend
+
 steps:
   - name: gcr.io/cloud-builders/docker
     args:
       - build
       - -t
-      - europe-west2-docker.pkg.dev/$PROJECT_ID/aibudgettrackerbackend/aibudgettrackerbackend:$SHORT_SHA
+      - ${_AR_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_AR_IMAGE_NAME}:$SHORT_SHA
       - -t
-      - europe-west2-docker.pkg.dev/$PROJECT_ID/aibudgettrackerbackend/aibudgettrackerbackend:latest
+      - ${_AR_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_AR_IMAGE_NAME}:latest
       - AIBudgetTrackerBackend
 
 images:
-  - europe-west2-docker.pkg.dev/$PROJECT_ID/aibudgettrackerbackend/aibudgettrackerbackend:$SHORT_SHA
-  - europe-west2-docker.pkg.dev/$PROJECT_ID/aibudgettrackerbackend/aibudgettrackerbackend:latest
+  - ${_AR_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_AR_IMAGE_NAME}:$SHORT_SHA
+  - ${_AR_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_AR_IMAGE_NAME}:latest
 
 options:
   logging: CLOUD_LOGGING_ONLY
