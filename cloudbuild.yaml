@@ -3,9 +3,10 @@
 # Image URL shape:
 #   ${_AR_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_AR_IMAGE_NAME}:TAG
 #
-# Defaults match Cloud Run’s managed Artifact Registry repo in europe-west2:
-#   Repository ID: cloud-run-source-deploy
-#   Image name:    aibudget-backend  (align with your Cloud Run service if different)
+# Defaults match Cloud Run’s managed Artifact Registry repo in europe-west2.
+# Resolved destination (this project, no gcr.io for the app image):
+#   europe-west2-docker.pkg.dev/project-de78e93f-2f10-4495-9bb/cloud-run-source-deploy/aibudget-backend:$SHORT_SHA
+# Builder image below stays gcr.io/cloud-builders/docker (Google’s Docker builder only).
 #
 # IAM: whichever account runs the build needs roles/artifactregistry.writer on this repo
 # (often PROJECT_NUMBER@cloudbuild.gserviceaccount.com, or your trigger’s custom SA).
