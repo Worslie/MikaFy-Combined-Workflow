@@ -34,10 +34,7 @@ interface BudgetApi {
     suspend fun setupPin(@Body request: PinSetupRequest): Response<MessageResponse>
 
     @POST("auth/login/pin")
-    suspend fun loginWithPin(
-        @Header("Authorization") token: String,
-        @Body request: PinLoginRequest
-    ): Response<PinLoginResponse>
+    suspend fun loginWithPin(@Body request: PinLoginRequest): Response<PinLoginResponse>
 
     @POST("analyze/transaction")
     suspend fun analyzeTransaction(@Body request: CategorisationRequest): Response<TransactionResponse>

@@ -1,5 +1,6 @@
 package com.example.aibudgettracker
 
+// Cursor iteration 1.2
 // Custom packages
 import com.example.aibudgettracker.data.*
 import com.example.aibudgettracker.network.*
@@ -213,6 +214,7 @@ class MainActivity : ComponentActivity() {
             supabase.auth.sessionStatus.collect { status ->
                 if (status is SessionStatus.Authenticated) {
                     userEmail = status.session.user?.email
+                        authRepo.syncAuthTokenFromSession()
                     // If Supabase is authenticated but backend isn't, we might need to re-login to backend
                     // Or if we have a backend session, we might need a PIN
                     if (authRepo.hasBackendSession() && authRepo.isPinRequired()) {

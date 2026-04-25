@@ -123,6 +123,25 @@ class AuthRepository(private val supabase: SupabaseClient, private val context: 
 
     fun hasBackendSession(): Boolean = prefs.getString("access_token", null) != null
 
+    /**
+     * Keeps backend auth header aligned with the latest Supabase session token.
+     * This prevents stale persisted tokens from causing 401 on protected endpoints.
+     */
+    fun syncAuthTokenFromSession(): String? {
+        val currentToken = supabase.auth.currentSessionOrNull()?.accessToken
+        if (currentToken != null) {
+            NetworkClient.setAuthToken(currentToken)
+            prefs.edit().putString("access_token", currentToken).apply()
+        }
+        return currentToken
+    }
+
+    private fun prepareAuthTokenForRequest(): String? {
+        val token = syncAuthTokenFromSession() ?: prefs.getString("access_token", null)
+        NetworkClient.setAuthToken(token)
+        return token
+    }
+
     suspend fun loginToBackend(idToken: String): Result<Boolean> {
         Log.d("AuthRepo", "Attempting backend login with ID Token...")
         return try {
@@ -176,12 +195,19 @@ class AuthRepository(private val supabase: SupabaseClient, private val context: 
 
     suspend fun loginWithPin(pin: String): Result<Boolean> {
         return try {
-            val token = supabase.auth.currentSessionOrNull()?.accessToken
-            if (token == null) {
-                return Result.failure(Exception("No Supabase session found"))
+            val token = prepareAuthTokenForRequest()
+                ?: return Result.failure(Exception("No authenticated session. Please sign in again."))
+
+            var response = NetworkClient.api.loginWithPin(PinLoginRequest(pin))
+
+            // Retry once if token is stale: re-sync from current Supabase session.
+            if (response.code() == 401) {
+                val refreshed = syncAuthTokenFromSession()
+                if (!refreshed.isNullOrBlank() && refreshed != token) {
+                    response = NetworkClient.api.loginWithPin(PinLoginRequest(pin))
+                }
             }
 
-            val response = NetworkClient.api.loginWithPin("Bearer $token", PinLoginRequest(pin))
             if (response.isSuccessful) {
                 Result.success(true)
             } else {
